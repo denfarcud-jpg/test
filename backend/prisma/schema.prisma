@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Справочники ---
+
+model Store {
+  id           Int           @id @default(autoincrement())
+  name         String
+  receipts     Receipt[]
+  postings     Posting[]
+  sales        SalesInvoice[]
+  writeOffs    WriteOffAct[]
+  reservations Reservation[]
+
+  @@map("store")
+}
+
+// --- Документы ---
+
+model Receipt {
+  id             Int       @id @default(autoincrement())
+  dateReceipt    DateTime  @default(now()) @map("date_receipt")
+  numReceipt     String    @map("num_receipt")
+
+  bitrixPartnerId Int     @map("bitrix_partner_id")
+  partnerName     String  @map("partner_name")
+
+
+  bitrixOrgId     Int       @map("bitrix_org_id")
+  orgName         String    @map("org_name")
+
+  dateConducted   DateTime? @map("date_conducted")
+
+  storeId         Int       @map("store_id")
+  store           Store     @relation(fields: [storeId], references: [id])
+
+  totalSum        Decimal   @map("total_sum") @db.Decimal(15, 2)
+  responsible     String
+  status          String
+
+  items           ReceiptItem[]
+
+  @@map("receipt")
+}
+
+model ReceiptItem {
+  id           Int     @id @default(autoincrement())
+  receiptId    Int     @map("receipt_id")
+  bitrixProductId Int     @map("bitrix_product_id")
+  productName     String  @map("product_name")
+  countProduct Decimal @map("count_product") @db.Decimal(10, 3)
+  unit         String
+  priceProduct Decimal @map("price_product") @db.Decimal(15, 2)
+  countLocation Int    @map("count_location")
+
+  receipt      Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  @@map("receipt_item")
+}
+
+model SalesInvoice {
+  id            Int       @id @default(autoincrement())
+  dateShipment  DateTime  @default(now()) @map("date_shipment")
+  numShipment   String?   @map("num_shipment")
+
+  bitrixPartnerId Int     @map("bitrix_partner_id")
+  partnerName     String  @map("partner_name")
+
+
+  bitrixOrgId     Int       @map("bitrix_org_id")
+  orgName         String    @map("org_name")
+
+
+  bitrixDealId    Int?      @map("bitrix_deal_id")
+
+  dateConducted   DateTime? @map("date_conducted")
+
+  storeId         Int       @map("store_id")
+  store           Store     @relation(fields: [storeId], references: [id])
+
+  totalSum        Decimal   @map("total_sum") @db.Decimal(15, 2)
+  responsible     String
+  status          String
+
+  items           SalesInvoiceItem[]
+
+  @@map("sales_invoice")
+}
+
+model SalesInvoiceItem {
+  id             Int     @id @default(autoincrement())
+  salesInvoiceId Int     @map("sales_invoice_id")
+
+  bitrixProductId Int     @map("bitrix_product_id")
+  productName     String  @map("product_name")
+
+  countProduct   Decimal @map("count_product") @db.Decimal(10, 3)
+
+  unit           String
+  priceProduct   Decimal @map("price_product") @db.Decimal(15, 2)
+  countLocation  Int     @map("count_location")
+
+  salesInvoice   SalesInvoice @relation(fields: [salesInvoiceId], references: [id], onDelete: Cascade)
+
+  @@map("sales_invoice_item")
+}
+
+model Posting {
+  id              Int       @id @default(autoincrement())
+  datePosting     DateTime  @default(now()) @map("date_posting")
+  numPosting      String    @map("num_posting")
+
+
+  dateConducted   DateTime? @map("date_conducted")
+
+  bitrixOrgId     Int       @map("bitrix_org_id")
+  orgName         String    @map("org_name")
+
+  dateCancellation DateTime? @map("date_cancellation")
+
+  storeId          Int       @map("store_id")
+  store            Store     @relation(fields: [storeId], references: [id])
+
+  totalSum         Decimal   @map("total_sum") @db.Decimal(15, 2)
+
+  bitrixDealId     Int?      @map("deal_id")
+
+  responsible      String
+  status           String
+
+  items            PostingItem[]
+
+  @@map("posting")
+}
+
+model PostingItem {
+  id              Int     @id @default(autoincrement())
+  postingId       Int     @map("posting_id")
+
+
+  bitrixProductId Int     @map("product_id")
+  productName     String  @map("product_name")
+
+  countProduct    Decimal @map("count_product") @db.Decimal(10, 3)
+  unit            String
+  priceProduct    Decimal @map("price_product") @db.Decimal(15, 2)
+  countLocation   Int     @map("count_location")
+
+  posting         Posting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+
+  @@map("posting_item")
+}
+
+model WriteOffAct {
+  id               Int       @id @default(autoincrement())
+  dateCancellation DateTime  @default(now()) @map("date_cancellation")
+  numCancellation  String    @map("num_cancellation")
+  dateConducted    DateTime? @map("date_conducted")
+
+  storeId          Int       @map("store_id")
+  store            Store     @relation(fields: [storeId], references: [id])
+
+  bitrixOrgId      Int       @map("bitrix_org_id")
+  orgName          String    @map("org_name")
+
+  totalSum         Decimal   @map("total_sum") @db.Decimal(15, 2)
+  bitrixDealId     Int?      @map("bitrix_deal_id")
+  responsible      String
+  status           String
+
+  items            WriteOffActItem[]
+
+  @@map("write_off_act")
+}
+
+model WriteOffActItem {
+  id            Int     @id @default(autoincrement())
+  writeOffActId Int     @map("write_off_act_id")
+  bitrixProductId Int     @map("bitrix_product_id")
+  productName     String  @map("product_name")
+  countProduct  Decimal @map("count_product") @db.Decimal(10, 3)
+  unit          String
+  priceProduct  Decimal @map("price_product") @db.Decimal(15, 2)
+  countLocation Int     @map("count_location")
+
+  writeOffAct   WriteOffAct @relation(fields: [writeOffActId], references: [id], onDelete: Cascade)
+
+  @@map("write_off_act_item")
+}
+
+model Reservation {
+  id              Int      @id @default(autoincrement())
+
+  bitrixProductId Int      @map("product_id")
+  productName     String   @map("product_name")
+
+  storeId         Int      @map("store_id")
+  store           Store    @relation(fields: [storeId], references: [id])
+
+  bitrixDealId    Int      @map("deal_id")
+
+  quantity        Decimal  @db.Decimal(10, 3)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("reservation")
+}
+
+model BitrixInstallation {
+  memberId       String  @id @map("member_id")
+  domain         String  @unique
+  accessToken    String  @map("access_token")
+  refreshToken   String  @map("refresh_token")
+  clientEndpoint String  @map("client_endpoint")
+  serverEndpoint String  @map("server_endpoint")
+  isActive       Boolean @default(true) @map("is_active")
+  installedAt    DateTime @default(now()) @map("installed_at")
+
+  @@map("bitrix_installation")
+}
